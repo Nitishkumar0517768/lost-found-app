@@ -2,6 +2,7 @@ const express = require("express");
 const FoundItem = require("../models/FoundItem");
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload");
+const { uploadToCloudinary } = require("../utils/cloudinary");
 const router = express.Router();
 
 router.use(authMiddleware);
@@ -128,11 +129,16 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     let finalImageUrl = imageUrl || "";
     if (req.file) {
-      finalImageUrl = `/uploads/${req.file.filename}`;
+      finalImageUrl = req.file.path;
     }
 
     if (!finalImageUrl) {
       return res.status(400).json({ error: "Photo upload is required for found items." });
+    }
+
+    // Convert to Cloudinary URL
+    if (finalImageUrl.startsWith("data:image") || req.file) {
+      finalImageUrl = await uploadToCloudinary(finalImageUrl);
     }
 
     const item = await FoundItem.create({

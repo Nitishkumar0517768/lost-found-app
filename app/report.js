@@ -8,8 +8,10 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import api from "../utils/api";
 import { Colors } from "../constants/theme";
 
@@ -39,9 +41,64 @@ export default function ReportScreen() {
   const [approxTime, setApproxTime] = useState("");
 
   // Found Fields
-  const [imageUrl, setImageUrl] = useState("https://placehold.co/400x300.png?text=Found+Item+Photo");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
   const [holdingLocation, setHoldingLocation] = useState(HOLDING_LOCATIONS[0].value);
   const [privateNotes, setPrivateNotes] = useState("");
+
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Camera access is needed to capture the found item.");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.6,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Data = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setImageUrl(base64Data);
+        setImagePreview(asset.uri);
+      }
+    } catch (e) {
+      console.error("Camera error:", e);
+      Alert.alert("Error", "Could not open camera.");
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Photo library access is needed to select a picture.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.6,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Data = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setImageUrl(base64Data);
+        setImagePreview(asset.uri);
+      }
+    } catch (e) {
+      console.error("Gallery error:", e);
+      Alert.alert("Error", "Could not open gallery.");
+    }
+  };
 
   const handleSubmit = async () => {
     if (!title || !description || !date) {
@@ -61,11 +118,12 @@ export default function ReportScreen() {
           location: finalLocation,
           dateLost: date,
           approxTime,
+          imageUrl: imageUrl || undefined,
         });
         Alert.alert("Success", "Lost item reported successfully.");
       } else {
         if (!imageUrl) {
-          Alert.alert("Required", "Image is required for found items.");
+          Alert.alert("Photo Required", "Please take a photo or choose an image for the found item.");
           setLoading(false);
           return;
         }
@@ -236,14 +294,42 @@ export default function ReportScreen() {
               ))}
             </View>
 
-            <Text style={styles.label}>Photo (URL)</Text>
-            <TextInput
-              style={styles.input}
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              placeholder="Photo URL link (Required)"
-              placeholderTextColor={Colors.stone}
-            />
+            {/* Camera / Photo Section */}
+            <Text style={styles.label}>Item Photo (Camera / Gallery)</Text>
+            <View style={styles.photoActionsRow}>
+              <TouchableOpacity style={styles.cameraBtn} onPress={handleTakePhoto}>
+                <Text style={styles.cameraBtnText}>📸 Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.galleryBtn} onPress={handlePickFromGallery}>
+                <Text style={styles.galleryBtnText}>🖼️ Choose Image</Text>
+              </TouchableOpacity>
+            </View>
+
+            {imagePreview ? (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: imagePreview }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => {
+                    setImageUrl("");
+                    setImagePreview("");
+                  }}
+                >
+                  <Text style={styles.removeImageText}>✕ Remove Photo</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={imageUrl}
+                onChangeText={(t) => {
+                  setImageUrl(t);
+                  setImagePreview(t);
+                }}
+                placeholder="Or paste an image URL..."
+                placeholderTextColor={Colors.stone}
+              />
+            )}
 
             <Text style={styles.label}>Private Verification Notes (Optional)</Text>
             <TextInput
@@ -362,6 +448,61 @@ const styles = StyleSheet.create({
   },
   selectorChipTextActive: {
     color: Colors.surface,
+    fontWeight: "bold",
+  },
+  photoActionsRow: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
+  cameraBtn: {
+    flex: 1,
+    backgroundColor: Colors.marigold,
+    borderWidth: 1,
+    borderColor: Colors.ink,
+    borderRadius: 4,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginRight: 6,
+  },
+  cameraBtnText: {
+    color: Colors.surface,
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  galleryBtn: {
+    flex: 1,
+    backgroundColor: Colors.paper,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 4,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginLeft: 6,
+  },
+  galleryBtnText: {
+    color: Colors.ink,
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  previewContainer: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  previewImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.paper,
+  },
+  removeImageBtn: {
+    marginTop: 6,
+    padding: 4,
+  },
+  removeImageText: {
+    color: Colors.rust,
+    fontSize: 12,
     fontWeight: "bold",
   },
   submitBtn: {
