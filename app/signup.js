@@ -11,22 +11,26 @@ export default function SignupScreen() {
   const [phone, setPhone] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { signup } = useAuth();
   const router = useRouter();
 
   const handleSignup = async () => {
+    setErrorMessage("");
     if (!fullName || !email || !password || !phone || !collegeName) {
+      setErrorMessage("Please fill in all required fields.");
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
       setLoading(true);
-      await signup(fullName, email, password, phone, collegeName);
+      await signup(fullName.trim(), email.trim(), password, phone.trim(), collegeName.trim());
       router.replace("/(tabs)");
     } catch (error) {
-      console.error(error);
-      const errMsg = error.response?.data?.error || "Registration failed. Please check details.";
+      console.error("Signup error:", error);
+      const errMsg = error.response?.data?.error || error.message || "Registration failed. Please check details.";
+      setErrorMessage(errMsg);
       Alert.alert("Signup Failed", errMsg);
     } finally {
       setLoading(false);
@@ -41,12 +45,21 @@ export default function SignupScreen() {
           <Text style={styles.subheader}>Create your student account</Text>
         </View>
 
+        {errorMessage ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.form}>
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             style={styles.input}
             value={fullName}
-            onChangeText={setFullName}
+            onChangeText={(t) => {
+              setFullName(t);
+              setErrorMessage("");
+            }}
             placeholder="e.g. John Doe"
             placeholderTextColor={Colors.stone}
           />
@@ -55,8 +68,11 @@ export default function SignupScreen() {
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={setEmail}
-            placeholder="e.g. user@college.edu"
+            onChangeText={(t) => {
+              setEmail(t);
+              setErrorMessage("");
+            }}
+            placeholder="e.g. name@paruluniversity.ac.in"
             placeholderTextColor={Colors.stone}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -66,7 +82,10 @@ export default function SignupScreen() {
           <TextInput
             style={styles.input}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(t) => {
+              setPassword(t);
+              setErrorMessage("");
+            }}
             placeholder="••••••••"
             placeholderTextColor={Colors.stone}
             secureTextEntry
@@ -77,8 +96,11 @@ export default function SignupScreen() {
           <TextInput
             style={styles.input}
             value={phone}
-            onChangeText={setPhone}
-            placeholder="e.g. +91 99999 99999"
+            onChangeText={(t) => {
+              setPhone(t);
+              setErrorMessage("");
+            }}
+            placeholder="e.g. +91 9876543210"
             placeholderTextColor={Colors.stone}
             keyboardType="phone-pad"
           />
@@ -87,8 +109,11 @@ export default function SignupScreen() {
           <TextInput
             style={styles.input}
             value={collegeName}
-            onChangeText={setCollegeName}
-            placeholder="e.g. Harvard University"
+            onChangeText={(t) => {
+              setCollegeName(t);
+              setErrorMessage("");
+            }}
+            placeholder="e.g. Parul University"
             placeholderTextColor={Colors.stone}
           />
 
@@ -136,7 +161,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headerSerif: {
     fontSize: 28,
@@ -149,6 +174,19 @@ const styles = StyleSheet.create({
     color: Colors.stone,
     textAlign: "center",
     marginTop: 4,
+  },
+  errorBox: {
+    backgroundColor: "#FADBD8",
+    borderWidth: 1,
+    borderColor: Colors.rust,
+    padding: 10,
+    borderRadius: 4,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: Colors.rust,
+    fontSize: 13,
+    fontWeight: "bold",
   },
   form: {
     width: "100%",

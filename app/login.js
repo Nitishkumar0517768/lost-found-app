@@ -8,22 +8,29 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
+    setErrorMessage("");
     if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
       setLoading(true);
-      await login(email, password);
+      await login(email.trim(), password);
       router.replace("/(tabs)");
     } catch (error) {
-      console.error(error);
-      const errMsg = error.response?.data?.error || "Login failed. Please check your credentials.";
+      console.error("Login error:", error);
+      const errMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Login failed. Please check your credentials and ensure backend is running.";
+      setErrorMessage(errMsg);
       Alert.alert("Login Failed", errMsg);
     } finally {
       setLoading(false);
@@ -38,13 +45,22 @@ export default function LoginScreen() {
           <Text style={styles.subheaderSerif}>Lost & Found</Text>
         </View>
 
+        {errorMessage ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.form}>
           <Text style={styles.label}>College Email</Text>
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={setEmail}
-            placeholder="e.g. name@college.edu"
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrorMessage("");
+            }}
+            placeholder="e.g. name@paruluniversity.ac.in"
             placeholderTextColor={Colors.stone}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -54,7 +70,10 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrorMessage("");
+            }}
             placeholder="••••••••"
             placeholderTextColor={Colors.stone}
             secureTextEntry
@@ -104,7 +123,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   headerSerif: {
     fontSize: 32,
@@ -120,6 +139,19 @@ const styles = StyleSheet.create({
     color: Colors.marigold,
     textAlign: "center",
     marginTop: -4,
+  },
+  errorBox: {
+    backgroundColor: "#FADBD8",
+    borderWidth: 1,
+    borderColor: Colors.rust,
+    padding: 10,
+    borderRadius: 4,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: Colors.rust,
+    fontSize: 13,
+    fontWeight: "bold",
   },
   form: {
     width: "100%",
@@ -140,7 +172,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: Colors.ink,
-    marginBottom: 20,
+    marginBottom: 18,
     fontFamily: "monospace",
   },
   button: {
@@ -150,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 14,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 6,
     shadowColor: Colors.ink,
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.1,

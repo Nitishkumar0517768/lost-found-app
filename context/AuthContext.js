@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import * as SecureStore from "expo-secure-store";
 import api from "../utils/api";
 import { initSocket, disconnectSocket } from "../utils/socket";
+import { getStorageItem, setStorageItem, deleteStorageItem } from "../utils/storage";
 
 const AuthContext = createContext(undefined);
 
@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }) => {
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync("user_jwt_token");
-      const storedUserData = await SecureStore.getItemAsync("user_data");
+      const storedToken = await getStorageItem("user_jwt_token");
+      const storedUserData = await getStorageItem("user_data");
       if (storedToken && storedUserData) {
         setToken(storedToken);
         setUser(JSON.parse(storedUserData));
@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post("/auth/login", { email, password });
     const { token: jwtToken, user: userData } = res.data;
 
-    await SecureStore.setItemAsync("user_jwt_token", jwtToken);
-    await SecureStore.setItemAsync("user_data", JSON.stringify(userData));
+    await setStorageItem("user_jwt_token", jwtToken);
+    await setStorageItem("user_data", JSON.stringify(userData));
 
     setToken(jwtToken);
     setUser(userData);
@@ -61,16 +61,16 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post("/auth/signup", { fullName, email, password, phone, collegeName });
     const { token: jwtToken, user: userData } = res.data;
 
-    await SecureStore.setItemAsync("user_jwt_token", jwtToken);
-    await SecureStore.setItemAsync("user_data", JSON.stringify(userData));
+    await setStorageItem("user_jwt_token", jwtToken);
+    await setStorageItem("user_data", JSON.stringify(userData));
 
     setToken(jwtToken);
     setUser(userData);
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync("user_jwt_token");
-    await SecureStore.deleteItemAsync("user_data");
+    await deleteStorageItem("user_jwt_token");
+    await deleteStorageItem("user_data");
     setToken(null);
     setUser(null);
     setNotifications([]);
