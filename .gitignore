@@ -41,3 +41,12 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Ignored as requested
+PRD-Campus-Lost-and-Found.md
+
+# Backend
+backend/node_modules/
+backend/.env
+.env
+.env*
