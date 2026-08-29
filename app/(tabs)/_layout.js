@@ -1,6 +1,5 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 

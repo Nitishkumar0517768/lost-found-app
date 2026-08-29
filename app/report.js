@@ -24,7 +24,7 @@ const HOLDING_LOCATIONS = [
 
 export default function ReportScreen() {
   const router = useRouter();
-  const [reportType, setReportType] = useState<"lost" | "found">("lost");
+  const [reportType, setReportType] = useState("lost");
   const [loading, setLoading] = useState(false);
 
   // Common Fields
@@ -33,7 +33,7 @@ export default function ReportScreen() {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(LOCATIONS[0]);
   const [customLocation, setCustomLocation] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]); // YYYY-MM-DD
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
   // Lost Fields
   const [approxTime, setApproxTime] = useState("");
@@ -83,7 +83,7 @@ export default function ReportScreen() {
         Alert.alert("Success", "Found item reported successfully.");
       }
       router.replace("/(tabs)");
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       const err = error.response?.data?.error || "Could not save report.";
       Alert.alert("Error", err);

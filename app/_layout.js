@@ -16,10 +16,8 @@ function RootLayoutContent() {
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'signup';
 
     if (!user && !inAuthGroup) {
-      // Redirect to login if user is not authenticated
       router.replace('/login');
     } else if (user && inAuthGroup) {
-      // Redirect to home if user is authenticated and trying to access auth screens
       router.replace('/(tabs)');
     }
   }, [user, loading, segments]);

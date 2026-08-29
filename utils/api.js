@@ -2,11 +2,8 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-// Detect local server URL based on platform
-// For Android emulator, localhost maps to 10.0.2.2. For iOS/Web, localhost works.
 const getBaseUrl = () => {
   if (Platform.OS === "android") {
-    // If running on actual Android device, replace with your local dev machine IP
     return "http://10.0.2.2:5000";
   }
   return "http://localhost:5000";
@@ -19,7 +16,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token
 api.interceptors.request.use(
   async (config) => {
     try {

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { Colors } from "../../constants/theme";
 
@@ -10,13 +10,13 @@ export default function NotificationsScreen() {
     fetchNotifications();
   }, []);
 
-  const handleNotificationPress = async (item: any) => {
+  const handleNotificationPress = async (item) => {
     if (!item.isRead) {
       await markAsRead(item._id);
     }
   };
 
-  const getIcon = (type: string) => {
+  const getIcon = (type) => {
     switch (type) {
       case "claim_request":
         return "❓";
@@ -29,7 +29,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const renderNotificationCard = ({ item }: { item: any }) => {
+  const renderNotificationCard = ({ item }) => {
     return (
       <TouchableOpacity
         style={[styles.card, !item.isRead && styles.unreadCard]}

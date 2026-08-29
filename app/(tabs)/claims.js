@@ -4,7 +4,7 @@ import api from "../../utils/api";
 import { Colors } from "../../constants/theme";
 
 export default function ClaimsScreen() {
-  const [claims, setClaims] = useState<any[]>([]);
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchClaims = async () => {
@@ -12,7 +12,7 @@ export default function ClaimsScreen() {
     try {
       const res = await api.get("/claims/received");
       setClaims(res.data || []);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
       Alert.alert("Error", "Could not fetch claims.");
     } finally {
@@ -24,7 +24,7 @@ export default function ClaimsScreen() {
     fetchClaims();
   }, []);
 
-  const handleClaimAction = async (claimId: string, status: "accepted" | "rejected") => {
+  const handleClaimAction = async (claimId, status) => {
     const actionText = status === "accepted" ? "ACCEPT" : "REJECT";
     Alert.alert(
       "Confirm Action",
@@ -45,7 +45,7 @@ export default function ClaimsScreen() {
                 Alert.alert("Claim Rejected ❌", "Claim has been successfully rejected.");
               }
               fetchClaims();
-            } catch (error: any) {
+            } catch (error) {
               const err = error.response?.data?.error || `Could not update claim.`;
               Alert.alert("Error", err);
             }
@@ -55,7 +55,7 @@ export default function ClaimsScreen() {
     );
   };
 
-  const renderClaimCard = ({ item }: { item: any }) => {
+  const renderClaimCard = ({ item }) => {
     const isPending = item.status === "pending";
 
     return (

@@ -20,7 +20,6 @@ export const Colors = {
     tabIconSelected: '#E8A33D',
   },
   dark: {
-    // Keep it premium/warm noticeboard style even in dark, or fallback
     text: '#F6F1E4',
     background: '#2B2620',
     tint: '#E8A33D',

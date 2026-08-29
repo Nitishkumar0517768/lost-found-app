@@ -3,36 +3,14 @@ import * as SecureStore from "expo-secure-store";
 import api from "../utils/api";
 import { initSocket, disconnectSocket } from "../utils/socket";
 
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  collegeId: string;
-  collegeName: string;
-}
+const AuthContext = createContext(undefined);
 
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (fullName: string, email: string, password: string, phone: string, collegeName: string) => Promise<void>;
-  logout: () => Promise<void>;
-  notifications: any[];
-  unreadCount: number;
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     loadStoredAuth();
@@ -40,7 +18,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      // Connect socket on login
       const socket = initSocket(user.id, (newNotification) => {
         setNotifications((prev) => [newNotification, ...prev]);
         setUnreadCount((c) => c + 1);
@@ -69,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     const { token: jwtToken, user: userData } = res.data;
 
@@ -80,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
-  const signup = async (fullName: string, email: string, password: string, phone: string, collegeName: string) => {
+  const signup = async (fullName, email, password, phone, collegeName) => {
     const res = await api.post("/auth/signup", { fullName, email, password, phone, collegeName });
     const { token: jwtToken, user: userData } = res.data;
 
@@ -106,13 +83,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.get("/notifications");
       setNotifications(res.data);
-      setUnreadCount(res.data.filter((n: any) => !n.isRead).length);
+      setUnreadCount(res.data.filter((n) => !n.isRead).length);
     } catch (e) {
       console.error("Failed to fetch notifications", e);
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = async (notificationId) => {
     try {
       await api.patch(`/notifications/${notificationId}/read`);
       setNotifications((prev) =>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,8 +24,8 @@ export default function NoticeboardScreen() {
   const { user } = useAuth();
 
   // Screen state
-  const [activeTab, setActiveTab] = useState<"lost" | "found">("lost");
-  const [items, setItems] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("lost");
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -33,10 +33,10 @@ export default function NoticeboardScreen() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [location, setLocation] = useState("All");
-  const [dateFilter, setDateFilter] = useState(""); // "" | "Today" | "This Week"
+  const [dateFilter, setDateFilter] = useState("");
 
   // Modal States
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [claimModalVisible, setClaimModalVisible] = useState(false);
   const [proofDetails, setProofDetails] = useState("");
   const [claimLoading, setClaimLoading] = useState(false);
@@ -45,7 +45,7 @@ export default function NoticeboardScreen() {
     setLoading(true);
     try {
       const endpoint = activeTab === "lost" ? "/lost-items" : "/found-items";
-      const params: any = {};
+      const params = {};
       if (search) params.search = search;
       if (category !== "All") params.category = category;
       if (location !== "All") params.location = location;
@@ -53,7 +53,7 @@ export default function NoticeboardScreen() {
 
       const res = await api.get(endpoint, { params });
       setItems(res.data.items || []);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
       Alert.alert("Error", "Could not fetch items from noticeboard.");
     } finally {
@@ -92,7 +92,7 @@ export default function NoticeboardScreen() {
       setSelectedItem(null);
       setProofDetails("");
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
       const err = error.response?.data?.error || "Could not submit claim.";
       Alert.alert("Error", err);
     } finally {
@@ -100,13 +100,7 @@ export default function NoticeboardScreen() {
     }
   };
 
-  const getFullImageUrl = (path: string) => {
-    if (!path) return "https://placehold.co/300x200?text=No+Image";
-    if (path.startsWith("http")) return path;
-    return `${getBaseUrl()}${path}`;
-  };
-
-  const renderItemCard = ({ item }: { item: any }) => {
+  const renderItemCard = ({ item }) => {
     const isReturned = item.status === "returned";
 
     return (
@@ -270,7 +264,7 @@ export default function NoticeboardScreen() {
         />
       )}
 
-      {/* Float Action Button */}
+      {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={() => router.push("/report")}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>

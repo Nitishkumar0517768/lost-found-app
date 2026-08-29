@@ -1,9 +1,9 @@
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { getBaseUrl } from "./api";
 
-let socket: Socket | null = null;
+let socket = null;
 
-export const initSocket = (userId: string, onNotificationReceived: (notification: any) => void) => {
+export const initSocket = (userId, onNotificationReceived) => {
   if (socket) {
     socket.disconnect();
   }

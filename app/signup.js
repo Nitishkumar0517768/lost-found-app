@@ -1,50 +1,62 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { Colors } from "../constants/theme";
 
-export default function LoginScreen() {
+export default function SignupScreen() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [collegeName, setCollegeName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const handleSignup = async () => {
+    if (!fullName || !email || !password || !phone || !collegeName) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
       setLoading(true);
-      await login(email, password);
+      await signup(fullName, email, password, phone, collegeName);
       router.replace("/(tabs)");
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      const errMsg = error.response?.data?.error || "Login failed. Please check your credentials.";
-      Alert.alert("Login Failed", errMsg);
+      const errMsg = error.response?.data?.error || "Registration failed. Please check details.";
+      Alert.alert("Signup Failed", errMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.board}>
         <View style={styles.headerContainer}>
-          <Text style={styles.headerSerif}>Campus</Text>
-          <Text style={styles.subheaderSerif}>Lost & Found</Text>
+          <Text style={styles.headerSerif}>Register</Text>
+          <Text style={styles.subheader}>Create your student account</Text>
         </View>
 
         <View style={styles.form}>
+          <Text style={styles.label}>Full Name</Text>
+          <TextInput
+            style={styles.input}
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="e.g. John Doe"
+            placeholderTextColor={Colors.stone}
+          />
+
           <Text style={styles.label}>College Email</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="e.g. name@college.edu"
+            placeholder="e.g. user@college.edu"
             placeholderTextColor={Colors.stone}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -61,34 +73,54 @@ export default function LoginScreen() {
             autoCapitalize="none"
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="e.g. +91 99999 99999"
+            placeholderTextColor={Colors.stone}
+            keyboardType="phone-pad"
+          />
+
+          <Text style={styles.label}>College Name</Text>
+          <TextInput
+            style={styles.input}
+            value={collegeName}
+            onChangeText={setCollegeName}
+            placeholder="e.g. Harvard University"
+            placeholderTextColor={Colors.stone}
+          />
+
+          <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
             {loading ? (
               <ActivityIndicator color={Colors.surface} />
             ) : (
-              <Text style={styles.buttonText}>PIN TO BOARD</Text>
+              <Text style={styles.buttonText}>REGISTER NOW</Text>
             )}
           </TouchableOpacity>
 
-          <View style={styles.signupPrompt}>
-            <Text style={styles.promptText}>New student? </Text>
-            <Link href="/signup" asChild>
+          <View style={styles.loginPrompt}>
+            <Text style={styles.promptText}>Already registered? </Text>
+            <Link href="/login" asChild>
               <TouchableOpacity>
-                <Text style={styles.signupText}>Create account</Text>
+                <Text style={styles.loginText}>Log In</Text>
               </TouchableOpacity>
             </Link>
           </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: Colors.paper,
     justifyContent: "center",
     padding: 20,
+    paddingVertical: 40,
   },
   board: {
     backgroundColor: Colors.surface,
@@ -104,31 +136,28 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 24,
   },
   headerSerif: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: "serif",
     fontWeight: "bold",
     color: Colors.ink,
-    textAlign: "center",
   },
-  subheaderSerif: {
-    fontSize: 24,
-    fontFamily: "serif",
-    fontStyle: "italic",
-    color: Colors.marigold,
+  subheader: {
+    fontSize: 14,
+    color: Colors.stone,
     textAlign: "center",
-    marginTop: -4,
+    marginTop: 4,
   },
   form: {
     width: "100%",
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     color: Colors.ink,
-    marginBottom: 6,
+    marginBottom: 4,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
@@ -137,11 +166,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 4,
-    padding: 12,
-    fontSize: 16,
+    padding: 10,
+    fontSize: 15,
     color: Colors.ink,
-    marginBottom: 20,
-    fontFamily: "monospace",
+    marginBottom: 16,
   },
   button: {
     backgroundColor: Colors.marigold,
@@ -163,7 +191,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1.5,
   },
-  signupPrompt: {
+  loginPrompt: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
@@ -172,7 +200,7 @@ const styles = StyleSheet.create({
     color: Colors.stone,
     fontSize: 14,
   },
-  signupText: {
+  loginText: {
     color: Colors.rust,
     fontWeight: "bold",
     fontSize: 14,
