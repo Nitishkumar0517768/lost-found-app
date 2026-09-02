@@ -38,6 +38,14 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload images with your report.",
+          "cameraPermission": "The app accesses your camera to let you photograph found items."
+        }
       ]
     ],
     "experiments": {

@@ -1,50 +1,113 @@
-# Welcome to your Expo app 👋
+# 🎓 Campus Lost & Found
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A community-driven digital noticeboard designed for college and university campuses. Built with **React Native (Expo)** for cross-platform mobile delivery and a **Node.js / Express / MongoDB** backend.
 
-## Get started
+---
 
-1. Install dependencies
+## 🌟 Key Features
 
+- **📌 Interactive Noticeboard**: Filter lost and found items by Category (*ID Card, Keys, Phone, Bag, Wallet, etc.*), Location (*Library, Canteen, Parking, Classrooms*), and Date.
+- **📸 Visual Evidence**: Real-time photo capture and gallery uploads powered by Cloudinary with automatic optimization.
+- **🔒 Secure Claim Verification**: Finders can record private notes (e.g., specific markings, serial numbers) hidden from public view to securely verify claimant ownership proofs.
+- **🤝 Contact & Return Workflow**: Once proof is accepted, finders and claimants can directly connect via one-tap Call and Email actions.
+- **📬 Real-time Notifications**: Automated alerts for submitted claims, approved claims, and item status updates.
+- **📰 Editorial Noticeboard Aesthetic**: A curated, vintage-inspired palette with tactile feedback and responsive design.
+
+---
+
+## 🏗️ Project Architecture
+
+```
+lost-found-app/
+├── app/                  # Expo Router file-based screens & navigation
+│   ├── (tabs)/           # Tab screens (Noticeboard, Found, Claims, Alerts, Profile)
+│   ├── _layout.jsx       # Root navigation layout
+│   ├── login.jsx         # User authentication login
+│   ├── report.jsx        # Report Lost / Found Item form
+│   └── signup.jsx        # New student registration
+├── components/           # Reusable UI widgets (DrawerMenu, DatePicker, etc.)
+├── constants/            # Design system, color tokens, and typography
+├── context/              # Global state (AuthContext, DrawerContext)
+├── server/               # Express.js backend API
+│   ├── middleware/       # Auth (JWT) & file upload handlers
+│   ├── models/           # Mongoose schemas (User, LostItem, FoundItem, Claim, Notification)
+│   ├── routes/           # REST endpoints (/auth, /lost-items, /found-items, /claims, etc.)
+│   ├── scripts/          # Database seeding and cleanup utilities
+│   ├── utils/            # Cloudinary, email, and socket helpers
+│   ├── server.js         # Entry point for backend server
+│   └── package.json      # Server dependencies
+├── utils/                # Client API client (Axios) & token storage
+└── package.json          # Mobile app dependencies
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- **Node.js** (v18 or higher)
+- **Expo Go** on your physical iOS/Android device or an Android/iOS emulator
+- **MongoDB** (Local instance or MongoDB Atlas URI)
+
+---
+
+### 2. Server Setup
+
+1. Navigate to the server folder:
+   ```bash
+   cd server
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. Create your `.env` configuration:
    ```bash
-   npx expo start
+   cp .env.example .env
+   ```
+   Fill in your MongoDB connection string, JWT secret, and Cloudinary credentials:
+   ```env
+   PORT=5000
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/lost-found-app
+   JWT_SECRET=your_jwt_secret_key_here
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
    ```
 
-In the output, you'll find options to open the app in a
+4. Seed initial campus data (optional):
+   ```bash
+   node scripts/seedProvidedData.js
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+5. Start the backend server:
+   ```bash
+   npm start
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+### 3. Mobile App Setup
 
-When you're ready, run:
+1. From the project root directory:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run reset-project
-```
+2. Start the Expo development server:
+   ```bash
+   npx expo start -c
+   ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+3. Scan the QR code using the **Expo Go** app on Android or the Camera app on iOS.
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🛡️ Security & Privacy
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Sensitive environment variables (`.env`) are strictly excluded from git tracking.
+- Finder private verification notes are never exposed in public noticeboard API responses.
+- Passwords are encrypted using salted bcrypt hashing.
+- Student accounts are scoped by college email domain.

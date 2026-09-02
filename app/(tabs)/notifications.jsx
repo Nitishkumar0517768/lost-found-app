@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { Colors } from "../../constants/theme";
 
 export default function NotificationsScreen() {
+  const router = useRouter();
   const { notifications, loading, fetchNotifications, markAsRead } = useAuth();
 
   useEffect(() => {
@@ -13,6 +15,9 @@ export default function NotificationsScreen() {
   const handleNotificationPress = async (item) => {
     if (!item.isRead) {
       await markAsRead(item._id);
+    }
+    if (item.type === "claim_request" || item.type === "claim_accepted") {
+      router.push("/(tabs)/claims");
     }
   };
 

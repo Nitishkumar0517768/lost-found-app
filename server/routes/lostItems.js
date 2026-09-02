@@ -2,6 +2,7 @@ const express = require("express");
 const LostItem = require("../models/LostItem");
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload");
+const { uploadToCloudinary } = require("../utils/cloudinary");
 const router = express.Router();
 
 // Apply auth middleware to all routes
@@ -89,10 +90,20 @@ router.post("/", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "Required fields are missing." });
     }
 
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    if (new Date(dateLost) > endOfToday) {
+      return res.status(400).json({ error: "Date lost cannot be in the future." });
+    }
+
     // Determine imageUrl: uploaded file or direct URL in request body
     let finalImageUrl = imageUrl || "";
     if (req.file) {
-      finalImageUrl = `/uploads/${req.file.filename}`;
+      finalImageUrl = req.file.path;
+    }
+
+    if (finalImageUrl.startsWith("data:image") || req.file) {
+      finalImageUrl = await uploadToCloudinary(finalImageUrl);
     }
 
     const item = await LostItem.create({

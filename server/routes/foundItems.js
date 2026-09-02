@@ -1,5 +1,6 @@
 const express = require("express");
 const FoundItem = require("../models/FoundItem");
+const Claim = require("../models/Claim");
 const authMiddleware = require("../middleware/auth");
 const upload = require("../middleware/upload");
 const { uploadToCloudinary } = require("../utils/cloudinary");
@@ -21,6 +22,57 @@ const sanitizeFoundItem = (item, requesterId) => {
   }
   return itemObj;
 };
+
+// Get Found Items reported by currently logged-in user
+router.get("/my", async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const items = await FoundItem.find({ userId })
+      .sort({ createdAt: -1 })
+      .populate("userId", "fullName email phone");
+
+    const itemsWithClaims = await Promise.all(
+      items.map(async (item) => {
+        const itemObj = item.toObject();
+        const pendingClaims = await Claim.countDocuments({
+          foundItemId: item._id,
+          status: "pending",
+        });
+        itemObj.pendingClaimsCount = pendingClaims;
+        return itemObj;
+      })
+    );
+
+    res.json(itemsWithClaims);
+  } catch (error) {
+    console.error("Error fetching user's found items:", error);
+    res.status(500).json({ error: "Server error fetching your found items." });
+  }
+});
+
+// Delete a Found Item (only by the finder who reported it)
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const item = await FoundItem.findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ error: "Found item not found." });
+    }
+
+    if (item.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You can only delete your own found items." });
+    }
+
+    await FoundItem.findByIdAndDelete(req.params.id);
+    await Claim.deleteMany({ foundItemId: req.params.id });
+
+    res.json({ message: "Found item removed successfully." });
+  } catch (error) {
+    console.error("Error deleting found item:", error);
+    res.status(500).json({ error: "Server error deleting found item." });
+  }
+});
 
 // Get Found Items (College Scoped)
 router.get("/", async (req, res) => {
@@ -125,6 +177,12 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     if (!title || !description || !category || !location || !dateFound || !holdingLocation) {
       return res.status(400).json({ error: "Required fields are missing." });
+    }
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    if (new Date(dateFound) > endOfToday) {
+      return res.status(400).json({ error: "Date found cannot be in the future." });
     }
 
     let finalImageUrl = imageUrl || "";

@@ -82,14 +82,41 @@ router.post("/", async (req, res) => {
   }
 });
 
-// List claims received on items found by current user
+// List claims made by current user (Claimant's view)
+router.get("/my", async (req, res) => {
+  try {
+    const { id: claimantId } = req.user;
+
+    // Only return 'pending' and 'accepted' claims.
+    // Rejected claims are automatically removed from the claimant's claim tab.
+    const claims = await Claim.find({
+      claimantId,
+      status: { $in: ["pending", "accepted"] },
+    })
+      .populate({
+        path: "foundItemId",
+        populate: {
+          path: "userId",
+          select: "fullName email phone",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    res.json(claims);
+  } catch (error) {
+    console.error("Error fetching filed claims:", error);
+    res.status(500).json({ error: "Server error fetching filed claims." });
+  }
+});
+
+// List claims received on items found by current user (Finder's view)
 router.get("/received", async (req, res) => {
   try {
     const { id: userId } = req.user;
 
     // Find all items found by this user
     const items = await FoundItem.find({ userId });
-    const itemIds = items.map(i => i._id);
+    const itemIds = items.map((i) => i._id);
 
     // Find claims on these items
     const claims = await Claim.find({ foundItemId: { $in: itemIds } })

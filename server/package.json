@@ -1,7 +1,7 @@
 {
-  "name": "lost-found-backend",
+  "name": "lost-found-server",
   "version": "1.0.0",
-  "description": "Backend API for Campus Lost & Found App",
+  "description": "Server API for Campus Lost & Found App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

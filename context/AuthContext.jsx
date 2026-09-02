@@ -101,6 +101,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = async (updatedUserData) => {
+    setUser(updatedUserData);
+    await setStorageItem("user_data", JSON.stringify(updatedUserData));
+  };
+
+  const updateProfile = async ({ fullName, phone, collegeName, profilePic }) => {
+    const res = await api.put("/auth/profile", { fullName, phone, collegeName, profilePic });
+    const { user: updatedUser } = res.data;
+    await updateUser(updatedUser);
+    return updatedUser;
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      if (res.data?.user) {
+        await updateUser(res.data.user);
+      }
+    } catch (e) {
+      console.error("Failed to refresh profile", e);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -110,6 +133,9 @@ export const AuthProvider = ({ children }) => {
         login,
         signup,
         logout,
+        updateUser,
+        updateProfile,
+        refreshProfile,
         notifications,
         unreadCount,
         fetchNotifications,

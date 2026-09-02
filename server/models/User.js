@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     phone: { type: String, required: true },
     collegeId: { type: mongoose.Schema.Types.ObjectId, ref: "College", required: true },
+    profilePic: { type: String, default: "" },
   },
   { timestamps: true }
 );

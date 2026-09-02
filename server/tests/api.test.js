@@ -19,7 +19,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 socketHelper.init(io);
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use("/auth", authRouter);
 app.use("/lost-items", lostItemsRouter);
 app.use("/found-items", foundItemsRouter);

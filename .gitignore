@@ -45,8 +45,22 @@ app-example
 # Ignored as requested
 PRD-Campus-Lost-and-Found.md
 
-# Backend
-backend/node_modules/
-backend/.env
+# Server
+server/node_modules/
+server/.env
+server/.env*
+server/public/uploads/*
+!server/public/uploads/.gitkeep
+
+# Legacy Backend
+backend/
+
+# Environment files
 .env
 .env*
+
+# IDE & Editor files
+.vscode/
+.claude/
+.idea/
+*.log

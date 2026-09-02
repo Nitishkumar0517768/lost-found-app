@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,15 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import api from "../utils/api";
 import { Colors } from "../constants/theme";
+import CampusDatePicker from "../components/CampusDatePicker";
 
 const CATEGORIES = ["ID Card", "Wallet", "Phone", "Bag", "Keys", "Electronics", "Documents", "Other"];
 const LOCATIONS = ["Library", "Canteen", "Parking", "Classroom", "Other"];
@@ -46,6 +50,34 @@ export default function ReportScreen() {
   const [holdingLocation, setHoldingLocation] = useState(HOLDING_LOCATIONS[0].value);
   const [privateNotes, setPrivateNotes] = useState("");
 
+  const scrollViewRef = useRef(null);
+  const [keyboardPadding, setKeyboardPadding] = useState(40);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardPadding((e.endCoordinates ? e.endCoordinates.height : 260) + 40);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardPadding(40);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToInput = (yOffset) => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
+    }, 120);
+  };
+
   const handleTakePhoto = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -57,7 +89,7 @@ export default function ReportScreen() {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
-        quality: 0.6,
+        quality: 0.5,
         base64: true,
       });
 
@@ -84,7 +116,7 @@ export default function ReportScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
-        quality: 0.6,
+        quality: 0.5,
         base64: true,
       });
 
@@ -103,6 +135,13 @@ export default function ReportScreen() {
   const handleSubmit = async () => {
     if (!title || !description || !date) {
       Alert.alert("Required Fields", "Please enter title, description, and date.");
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (new Date(date) > today) {
+      Alert.alert("Invalid Date", "Date cannot be in the future. Please choose today or a past date.");
       return;
     }
 
@@ -151,72 +190,86 @@ export default function ReportScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Type Toggle */}
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.toggleBtn, reportType === "lost" && styles.toggleBtnActive]}
-          onPress={() => setReportType("lost")}
-        >
-          <Text style={[styles.toggleBtnText, reportType === "lost" && styles.toggleBtnTextActive]}>
-            REPORT LOST ITEM
-          </Text>
-        </TouchableOpacity>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1, backgroundColor: Colors.paper }}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.container, { paddingBottom: keyboardPadding }]}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Type Toggle */}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, reportType === "lost" && styles.toggleBtnActive]}
+            onPress={() => setReportType("lost")}
+          >
+            <Text style={[styles.toggleBtnText, reportType === "lost" && styles.toggleBtnTextActive]}>
+              REPORT LOST ITEM
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.toggleBtn, reportType === "found" && styles.toggleBtnActive]}
-          onPress={() => setReportType("found")}
-        >
-          <Text style={[styles.toggleBtnText, reportType === "found" && styles.toggleBtnTextActive]}>
-            REPORT FOUND ITEM
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.board}>
-        {/* Title */}
-        <Text style={styles.label}>Item Title / Name</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder={reportType === "lost" ? "e.g. Lost my leather wallet" : "e.g. Found black wallet"}
-          placeholderTextColor={Colors.stone}
-        />
-
-        {/* Category Selector */}
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.selectorGrid}>
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.selectorChip, category === cat && styles.selectorChipActive]}
-              onPress={() => setCategory(cat)}
-            >
-              <Text style={[styles.selectorChipText, category === cat && styles.selectorChipTextActive]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.toggleBtn, reportType === "found" && styles.toggleBtnActive]}
+            onPress={() => setReportType("found")}
+          >
+            <Text style={[styles.toggleBtnText, reportType === "found" && styles.toggleBtnTextActive]}>
+              REPORT FOUND ITEM
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Description */}
-        <Text style={styles.label}>
-          {reportType === "lost" ? "Description (contents, distinguishing marks)" : "Public Description"}
-        </Text>
-        <TextInput
-          style={[styles.input, styles.textarea]}
-          multiline
-          numberOfLines={4}
-          value={description}
-          onChangeText={setDescription}
-          placeholder={
-            reportType === "lost"
-              ? "Describe brand, color, contents, unique keyrings..."
-              : "General public details (e.g. Black leather wallet, found near library entrance)"
-          }
-          placeholderTextColor={Colors.stone}
-        />
+        <View style={styles.board}>
+          {/* Title */}
+          <Text style={styles.label}>Item Title / Name</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            onFocus={() => scrollToInput(0)}
+            placeholder={reportType === "lost" ? "e.g. Lost my leather wallet" : "e.g. Found black wallet"}
+            placeholderTextColor={Colors.stone}
+          />
+
+          {/* Category Selector */}
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.selectorGrid}>
+            {CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.selectorChip, category === cat && styles.selectorChipActive]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text style={[styles.selectorChipText, category === cat && styles.selectorChipTextActive]}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Description */}
+          <Text style={styles.label}>
+            {reportType === "lost" ? "Description (contents, distinguishing marks)" : "Public Description"}
+          </Text>
+          <TextInput
+            style={[styles.input, styles.textarea]}
+            multiline
+            numberOfLines={4}
+            value={description}
+            onChangeText={setDescription}
+            onFocus={() => scrollToInput(120)}
+            placeholder={
+              reportType === "lost"
+                ? "Describe brand, color, contents, unique keyrings..."
+                : "General public details (e.g. Black leather wallet, found near library entrance)"
+            }
+            placeholderTextColor={Colors.stone}
+          />
 
         {/* Location Selector */}
         <Text style={styles.label}>{reportType === "lost" ? "Last Seen Location" : "Location Found"}</Text>
@@ -239,19 +292,17 @@ export default function ReportScreen() {
             style={styles.input}
             value={customLocation}
             onChangeText={setCustomLocation}
+            onFocus={() => scrollToInput(280)}
             placeholder="Specify other location details..."
             placeholderTextColor={Colors.stone}
           />
         )}
 
-        {/* Date Picker */}
-        <Text style={styles.label}>{reportType === "lost" ? "Date Lost" : "Date Found"}</Text>
-        <TextInput
-          style={styles.input}
+        {/* Date Picker with Calendar and Future Date Restriction */}
+        <CampusDatePicker
+          label={reportType === "lost" ? "Date Lost" : "Date Found"}
           value={date}
-          onChangeText={setDate}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor={Colors.stone}
+          onChange={setDate}
         />
 
         {/* Report Type Specific Fields */}
@@ -271,6 +322,48 @@ export default function ReportScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Reference Photo (Optional for Lost Item - Gallery only) */}
+            <Text style={styles.label}>Item Photo (Optional)</Text>
+            <Text style={styles.helperText}>
+              Have a past picture of your item in your gallery? Attach it so finders can recognize it easily.
+            </Text>
+
+            <View style={styles.photoActionsRow}>
+              <TouchableOpacity
+                style={[styles.galleryBtn, { marginLeft: 0, flex: 1, backgroundColor: Colors.surface }]}
+                onPress={handlePickFromGallery}
+              >
+                <Text style={styles.galleryBtnText}>🖼️ Choose Image from Gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            {imagePreview ? (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: imagePreview }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => {
+                    setImageUrl("");
+                    setImagePreview("");
+                  }}
+                >
+                  <Text style={styles.removeImageText}>✕ Remove Photo</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={imageUrl}
+                onChangeText={(t) => {
+                  setImageUrl(t);
+                  setImagePreview(t);
+                }}
+                onFocus={() => scrollToInput(480)}
+                placeholder="Or paste an image link (optional)..."
+                placeholderTextColor={Colors.stone}
+              />
+            )}
           </View>
         ) : (
           <View>
@@ -294,8 +387,8 @@ export default function ReportScreen() {
               ))}
             </View>
 
-            {/* Camera / Photo Section */}
-            <Text style={styles.label}>Item Photo (Camera / Gallery)</Text>
+            {/* Camera / Photo Section (Required for Found Item) */}
+            <Text style={styles.label}>Item Photo (Camera / Gallery) *</Text>
             <View style={styles.photoActionsRow}>
               <TouchableOpacity style={styles.cameraBtn} onPress={handleTakePhoto}>
                 <Text style={styles.cameraBtnText}>📸 Take Photo</Text>
@@ -326,6 +419,7 @@ export default function ReportScreen() {
                   setImageUrl(t);
                   setImagePreview(t);
                 }}
+                onFocus={() => scrollToInput(460)}
                 placeholder="Or paste an image URL..."
                 placeholderTextColor={Colors.stone}
               />
@@ -338,6 +432,7 @@ export default function ReportScreen() {
               numberOfLines={3}
               value={privateNotes}
               onChangeText={setPrivateNotes}
+              onFocus={() => scrollToInput(620)}
               placeholder="e.g. cash amount inside, ID name, serial numbers. Hidden from public listings."
               placeholderTextColor={Colors.stone}
             />
@@ -354,6 +449,7 @@ export default function ReportScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -449,6 +545,12 @@ const styles = StyleSheet.create({
   selectorChipTextActive: {
     color: Colors.surface,
     fontWeight: "bold",
+  },
+  helperText: {
+    fontSize: 12,
+    color: Colors.stone,
+    marginBottom: 8,
+    lineHeight: 16,
   },
   photoActionsRow: {
     flexDirection: "row",

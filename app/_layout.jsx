@@ -2,8 +2,12 @@ import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { DrawerProvider } from '../context/DrawerContext';
+import DrawerMenu from '../components/DrawerMenu';
 import { Colors } from '../constants/theme';
+import HeaderProfileButton from '../components/HeaderProfileButton';
 import 'react-native-reanimated';
 
 function RootLayoutContent() {
@@ -41,19 +45,30 @@ function RootLayoutContent() {
           title: 'Report Item',
           headerStyle: { backgroundColor: Colors.paper },
           headerTintColor: Colors.ink,
-          headerTitleStyle: { fontWeight: 'bold' }
+          headerTitleStyle: { fontWeight: 'bold' },
+          headerRight: () => (
+            <View style={{ marginRight: 16 }}>
+              <HeaderProfileButton />
+            </View>
+          ),
         }} 
       />
     </Stack>
   );
 }
 
+
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutContent />
-      <StatusBar style="dark" />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <DrawerProvider>
+          <RootLayoutContent />
+          <DrawerMenu />
+          <StatusBar style="dark" />
+        </DrawerProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

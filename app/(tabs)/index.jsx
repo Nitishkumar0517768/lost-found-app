@@ -10,11 +10,21 @@ import {
   Modal,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Link } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import api, { getBaseUrl } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors } from "../../constants/theme";
+
+const resolveImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  return `${getBaseUrl()}${url.startsWith("/") ? "" : "/"}${url}`;
+};
 
 const CATEGORIES = ["All", "ID Card", "Wallet", "Phone", "Bag", "Keys", "Electronics", "Documents", "Other"];
 const LOCATIONS = ["All", "Library", "Canteen", "Parking", "Classroom", "Other"];
@@ -52,7 +62,9 @@ export default function NoticeboardScreen() {
       if (dateFilter) params.dateFilter = dateFilter;
 
       const res = await api.get(endpoint, { params });
-      setItems(res.data.items || []);
+      // Exclude returned items so accepted/returned items automatically disappear from noticeboard
+      const activeItems = (res.data.items || []).filter((i) => i.status !== "returned");
+      setItems(activeItems);
     } catch (e) {
       console.error(e);
       Alert.alert("Error", "Could not fetch items from noticeboard.");
@@ -87,7 +99,17 @@ export default function NoticeboardScreen() {
         foundItemId: selectedItem._id,
         proofDetails,
       });
-      Alert.alert("Claim Filed", "The finder has been notified. You will get an alert once they review your proof.");
+      Alert.alert(
+        "Claim Filed ✅",
+        "Your claim has been submitted in pending state. The finder has been notified and you can track it in your Claims tab.",
+        [
+          {
+            text: "View Claims",
+            onPress: () => router.push("/(tabs)/claims"),
+          },
+          { text: "OK" },
+        ]
+      );
       setClaimModalVisible(false);
       setSelectedItem(null);
       setProofDetails("");
@@ -100,8 +122,25 @@ export default function NoticeboardScreen() {
     }
   };
 
+  const formatItemTime = (item) => {
+    if (item.approxTime) {
+      return item.approxTime;
+    }
+    if (item.createdAt) {
+      try {
+        const d = new Date(item.createdAt);
+        return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+      } catch (_e) {
+        return "";
+      }
+    }
+    return "";
+  };
+
   const renderItemCard = ({ item }) => {
     const isReturned = item.status === "returned";
+    const itemTime = formatItemTime(item);
+    const itemImage = resolveImageUrl(item.imageUrl);
 
     return (
       <View style={styles.card}>
@@ -120,13 +159,36 @@ export default function NoticeboardScreen() {
           )}
         </View>
 
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
+        <View style={styles.cardContentRow}>
+          {itemImage ? (
+            <Image
+              source={{ uri: itemImage }}
+              style={styles.cardItemImage}
+              resizeMode="cover"
+            />
+          ) : activeTab === "found" ? (
+            <View style={styles.cardImagePlaceholder}>
+              <Ionicons name="cube-outline" size={26} color={Colors.stone} />
+            </View>
+          ) : null}
+
+          <View style={styles.cardTextContainer}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaText}>📍 {item.location}</Text>
+          <View style={styles.locationCol}>
+            <Text style={styles.metaText}>📍 {item.location}</Text>
+            {itemTime ? (
+              <Text style={[styles.metaText, styles.timeText]}>
+                🕒 {itemTime}
+              </Text>
+            ) : null}
+          </View>
           <Text style={styles.metaText}>
             📅 {new Date(item.dateLost || item.dateFound).toLocaleDateString()}
           </Text>
@@ -199,21 +261,6 @@ export default function NoticeboardScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-          <View style={styles.divider} />
-          {["All Dates", "Today", "This Week"].map((date) => {
-            const isSel = (date === "All Dates" && !dateFilter) || dateFilter === date;
-            return (
-              <TouchableOpacity
-                key={date}
-                style={[styles.subFilterChip, isSel && styles.subFilterChipActive]}
-                onPress={() => setDateFilter(date === "All Dates" ? "" : date)}
-              >
-                <Text style={[styles.subFilterText, isSel && styles.subFilterTextActive]}>
-                  🕒 {date}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
         </ScrollView>
       </View>
 
@@ -265,9 +312,16 @@ export default function NoticeboardScreen() {
       )}
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={() => router.push("/report")}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <Link href="/report" asChild>
+        <TouchableOpacity
+          style={styles.fab}
+          activeOpacity={0.8}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          onPress={() => router.push("/report")}
+        >
+          <Ionicons name="add" size={34} color={Colors.surface} />
+        </TouchableOpacity>
+      </Link>
 
       {/* Claim Modal */}
       <Modal visible={claimModalVisible} animationType="slide" transparent>
@@ -275,8 +329,16 @@ export default function NoticeboardScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>File Ownership Claim</Text>
             <Text style={styles.modalSub}>
-              Submit proof details for: "{selectedItem?.title}"
+              Submit proof details for: {`"${selectedItem?.title || ""}"`}
             </Text>
+
+            {selectedItem?.imageUrl ? (
+              <Image
+                source={{ uri: resolveImageUrl(selectedItem.imageUrl) }}
+                style={styles.modalImagePreview}
+                resizeMode="cover"
+              />
+            ) : null}
 
             <Text style={styles.modalLabel}>Proof of ownership</Text>
             <TextInput
@@ -501,27 +563,65 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.forest,
   },
+  cardContentRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 8,
+  },
+  cardItemImage: {
+    width: 74,
+    height: 74,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.paper,
+  },
+  cardImagePlaceholder: {
+    width: 74,
+    height: 74,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.paper,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardTextContainer: {
+    flex: 1,
+  },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: "serif",
     fontWeight: "bold",
     color: Colors.ink,
-    marginBottom: 6,
+    marginBottom: 4,
+    lineHeight: 22,
   },
   cardDescription: {
     fontSize: 14,
     color: Colors.ink,
     opacity: 0.8,
-    marginBottom: 12,
+    marginBottom: 6,
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 12,
+  },
+  locationCol: {
+    flexDirection: "column",
+    gap: 4,
+    flex: 1,
+    paddingRight: 8,
   },
   metaText: {
     fontSize: 12,
     color: Colors.stone,
+  },
+  timeText: {
+    color: Colors.stone,
+    fontSize: 11.5,
   },
   cardFooter: {
     flexDirection: "row",
@@ -560,10 +660,10 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: Colors.marigold,
     borderWidth: 2,
     borderColor: Colors.ink,
@@ -571,9 +671,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     shadowColor: Colors.ink,
     shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 0,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 10,
+    zIndex: 999,
   },
   fabText: {
     color: Colors.surface,
@@ -604,7 +705,16 @@ const styles = StyleSheet.create({
   modalSub: {
     fontSize: 14,
     color: Colors.stone,
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  modalImagePreview: {
+    width: "100%",
+    height: 130,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 14,
+    backgroundColor: Colors.paper,
   },
   modalLabel: {
     fontSize: 12,
