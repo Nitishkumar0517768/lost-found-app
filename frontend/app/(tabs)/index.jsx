@@ -17,7 +17,6 @@ import { Ionicons } from "@expo/vector-icons";
 import api, { getBaseUrl } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { Colors } from "../../constants/theme";
-import CampusDropdown from "../../components/CampusDropdown";
 
 const resolveImageUrl = (url) => {
   if (!url) return null;
@@ -29,27 +28,6 @@ const resolveImageUrl = (url) => {
 
 const CATEGORIES = ["All", "ID Card", "Wallet", "Phone", "Bag", "Keys", "Electronics", "Documents", "Other"];
 const LOCATIONS = ["All", "Library", "Canteen", "Parking", "Classroom", "Other"];
-
-const CATEGORY_OPTIONS = [
-  { label: "All Categories", value: "All", icon: "apps-outline" },
-  { label: "ID Card", value: "ID Card", icon: "card-outline" },
-  { label: "Wallet", value: "Wallet", icon: "wallet-outline" },
-  { label: "Phone", value: "Phone", icon: "phone-portrait-outline" },
-  { label: "Bag", value: "Bag", icon: "bag-handle-outline" },
-  { label: "Keys", value: "Keys", icon: "key-outline" },
-  { label: "Electronics", value: "Electronics", icon: "laptop-outline" },
-  { label: "Documents", value: "Documents", icon: "document-text-outline" },
-  { label: "Other", value: "Other", icon: "cube-outline" },
-];
-
-const LOCATION_OPTIONS = [
-  { label: "All Locations", value: "All", icon: "globe-outline" },
-  { label: "Library", value: "Library", icon: "book-outline" },
-  { label: "Canteen", value: "Canteen", icon: "restaurant-outline" },
-  { label: "Parking", value: "Parking", icon: "car-outline" },
-  { label: "Classroom", value: "Classroom", icon: "school-outline" },
-  { label: "Other", value: "Other", icon: "location-outline" },
-];
 
 export default function NoticeboardScreen() {
   const router = useRouter();
@@ -255,27 +233,35 @@ export default function NoticeboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Categories and Locations Filter Dropdowns */}
-        <View style={styles.dropdownRow}>
-          <View style={styles.dropdownCol}>
-            <CampusDropdown
-              value={category}
-              options={CATEGORY_OPTIONS}
-              onSelect={(cat) => setCategory(cat)}
-              placeholder="All Categories"
-              themeColor={Colors.marigold}
-            />
-          </View>
-          <View style={styles.dropdownCol}>
-            <CampusDropdown
-              value={location}
-              options={LOCATION_OPTIONS}
-              onSelect={(loc) => setLocation(loc)}
-              placeholder="All Locations"
-              themeColor={Colors.marigold}
-            />
-          </View>
-        </View>
+        {/* Categories Horizontal Scroll */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.filterChip, category === cat && styles.filterChipActive]}
+              onPress={() => setCategory(cat)}
+            >
+              <Text style={[styles.filterChipText, category === cat && styles.filterChipTextActive]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Locations & Dates Horizontal Scroll */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollSub}>
+          {LOCATIONS.map((loc) => (
+            <TouchableOpacity
+              key={loc}
+              style={[styles.subFilterChip, location === loc && styles.subFilterChipActive]}
+              onPress={() => setLocation(loc)}
+            >
+              <Text style={[styles.subFilterText, location === loc && styles.subFilterTextActive]}>
+                📍 {loc}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Tabs */}
@@ -441,14 +427,54 @@ const styles = StyleSheet.create({
     color: Colors.surface,
     fontWeight: "bold",
   },
-  dropdownRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 2,
-    marginBottom: -6,
+  filterScroll: {
+    flexGrow: 0,
+    marginBottom: 8,
   },
-  dropdownCol: {
-    flex: 1,
+  filterScrollSub: {
+    flexGrow: 0,
+  },
+  filterChip: {
+    backgroundColor: Colors.paper,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginRight: 6,
+  },
+  filterChipActive: {
+    backgroundColor: Colors.marigold,
+    borderColor: Colors.ink,
+  },
+  filterChipText: {
+    color: Colors.stone,
+    fontSize: 12,
+  },
+  filterChipTextActive: {
+    color: Colors.surface,
+    fontWeight: "bold",
+  },
+  subFilterChip: {
+    backgroundColor: Colors.paper,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  subFilterChipActive: {
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
+  },
+  subFilterText: {
+    color: Colors.stone,
+    fontSize: 11,
+  },
+  subFilterTextActive: {
+    color: Colors.surface,
+    fontWeight: "bold",
   },
   divider: {
     width: 1,
