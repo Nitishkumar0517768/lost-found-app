@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
+  ScrollView,
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
@@ -17,31 +17,28 @@ import { Link, useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { Colors } from "../constants/theme";
 
-export default function SignupScreen() {
-  const [fullName, setFullName] = useState("");
+export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [collegeName, setCollegeName] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { signup } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
 
   const scrollViewRef = useRef(null);
-  const [keyboardPadding, setKeyboardPadding] = useState(30);
+  const [keyboardPadding, setKeyboardPadding] = useState(20);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
-        setKeyboardPadding((e.endCoordinates ? e.endCoordinates.height : 260) + 30);
+        setKeyboardPadding((e.endCoordinates ? e.endCoordinates.height : 240) + 20);
       }
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
-        setKeyboardPadding(30);
+        setKeyboardPadding(20);
       }
     );
 
@@ -51,27 +48,36 @@ export default function SignupScreen() {
     };
   }, []);
 
-  const handleSignup = async () => {
+  const handleLogin = async () => {
     Keyboard.dismiss();
     setErrorMessage("");
-    if (!fullName || !email || !password || !phone || !collegeName) {
-      setErrorMessage("Please fill in all required fields.");
+    if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     try {
       setLoading(true);
-      await signup(fullName.trim(), email.trim(), password, phone.trim(), collegeName.trim());
+      await login(email.trim(), password);
       router.replace("/(tabs)");
     } catch (error) {
-      console.error("Signup error:", error);
-      const errMsg = error.response?.data?.error || error.message || "Registration failed. Please check details.";
+      console.error("Login error:", error);
+      const errMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Login failed. Please check your credentials and ensure the server is running.";
       setErrorMessage(errMsg);
-      Alert.alert("Signup Failed", errMsg);
+      Alert.alert("Login Failed", errMsg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFillDemo = (demoEmail, demoPassword) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setErrorMessage("");
   };
 
   return (
@@ -91,8 +97,8 @@ export default function SignupScreen() {
         >
           <View style={styles.board}>
             <View style={styles.headerContainer}>
-              <Text style={styles.headerSerif}>Register</Text>
-              <Text style={styles.subheader}>Create your student account</Text>
+              <Text style={styles.headerSerif}>Campus</Text>
+              <Text style={styles.subheaderSerif}>Lost & Found</Text>
             </View>
 
             {errorMessage ? (
@@ -102,33 +108,18 @@ export default function SignupScreen() {
             ) : null}
 
             <View style={styles.form}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>College Email</Text>
               <TextInput
                 style={styles.input}
-                value={fullName}
-                onChangeText={(t) => {
-                  setFullName(t);
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
                   setErrorMessage("");
                 }}
                 onFocus={() => {
                   scrollViewRef.current?.scrollTo({ y: 0, animated: true });
                 }}
-                placeholder="e.g. John Doe"
-                placeholderTextColor={Colors.stone}
-              />
-
-              <Text style={styles.label}>College Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={(t) => {
-                  setEmail(t);
-                  setErrorMessage("");
-                }}
-                onFocus={() => {
-                  scrollViewRef.current?.scrollTo({ y: 50, animated: true });
-                }}
-                placeholder="e.g. name@paruluniversity.ac.in"
+                placeholder="student@college.edu"
                 placeholderTextColor={Colors.stone}
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -138,12 +129,12 @@ export default function SignupScreen() {
               <TextInput
                 style={styles.input}
                 value={password}
-                onChangeText={(t) => {
-                  setPassword(t);
+                onChangeText={(text) => {
+                  setPassword(text);
                   setErrorMessage("");
                 }}
                 onFocus={() => {
-                  scrollViewRef.current?.scrollTo({ y: 120, animated: true });
+                  scrollViewRef.current?.scrollTo({ y: 90, animated: true });
                 }}
                 placeholder="••••••••"
                 placeholderTextColor={Colors.stone}
@@ -151,50 +142,42 @@ export default function SignupScreen() {
                 autoCapitalize="none"
               />
 
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={(t) => {
-                  setPhone(t);
-                  setErrorMessage("");
-                }}
-                onFocus={() => {
-                  scrollViewRef.current?.scrollTo({ y: 190, animated: true });
-                }}
-                placeholder="e.g. +91 9876543210"
-                placeholderTextColor={Colors.stone}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={styles.label}>College Name</Text>
-              <TextInput
-                style={styles.input}
-                value={collegeName}
-                onChangeText={(t) => {
-                  setCollegeName(t);
-                  setErrorMessage("");
-                }}
-                onFocus={() => {
-                  scrollViewRef.current?.scrollTo({ y: 260, animated: true });
-                }}
-                placeholder="e.g. Parul University"
-                placeholderTextColor={Colors.stone}
-              />
-
-              <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
+              <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
                 {loading ? (
                   <ActivityIndicator color={Colors.surface} />
                 ) : (
-                  <Text style={styles.buttonText}>REGISTER NOW</Text>
+                  <Text style={styles.buttonText}>PIN TO BOARD</Text>
                 )}
               </TouchableOpacity>
 
-              <View style={styles.loginPrompt}>
-                <Text style={styles.promptText}>Already registered? </Text>
-                <Link href="/login" asChild>
+              {/* Quick Fill Demo Credentials for testing */}
+              <View style={styles.demoSection}>
+                <Text style={styles.demoLabel}>Demo Accounts (Tap to auto-fill):</Text>
+                <View style={styles.demoButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.demoChip}
+                    onPress={() =>
+                      handleFillDemo("kavya.mehta@swaminarayanuniversity.ac.in", "Student@123")
+                    }
+                  >
+                    <Text style={styles.demoChipText}>👤 Kavya (Student)</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.demoChip}
+                    onPress={() =>
+                      handleFillDemo("dev.prajapati@swaminarayanuniversity.ac.in", "Student@123")
+                    }
+                  >
+                    <Text style={styles.demoChipText}>👤 Dev (Student)</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.signupPrompt}>
+                <Text style={styles.promptText}>New student? </Text>
+                <Link href="/signup" asChild>
                   <TouchableOpacity>
-                    <Text style={styles.loginText}>Log In</Text>
+                    <Text style={styles.signupText}>Create account</Text>
                   </TouchableOpacity>
                 </Link>
               </View>
@@ -212,7 +195,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.paper,
     justifyContent: "center",
     padding: 20,
-    paddingVertical: 40,
+    paddingVertical: 30,
   },
   board: {
     backgroundColor: Colors.surface,
@@ -231,16 +214,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerSerif: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "serif",
     fontWeight: "bold",
     color: Colors.ink,
-  },
-  subheader: {
-    fontSize: 14,
-    color: Colors.stone,
     textAlign: "center",
-    marginTop: 4,
+  },
+  subheaderSerif: {
+    fontSize: 24,
+    fontFamily: "serif",
+    fontStyle: "italic",
+    color: Colors.marigold,
+    textAlign: "center",
+    marginTop: -4,
   },
   errorBox: {
     backgroundColor: "#FADBD8",
@@ -259,10 +245,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "bold",
     color: Colors.ink,
-    marginBottom: 4,
+    marginBottom: 6,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
@@ -271,10 +257,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 4,
-    padding: 10,
+    padding: 12,
     fontSize: 15,
     color: Colors.ink,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   button: {
     backgroundColor: Colors.marigold,
@@ -283,7 +269,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 14,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 6,
     shadowColor: Colors.ink,
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.1,
@@ -296,7 +282,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1.5,
   },
-  loginPrompt: {
+  demoSection: {
+    marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.paper,
+  },
+  demoLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: Colors.stone,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  demoButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  demoChip: {
+    backgroundColor: Colors.paper,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  demoChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.ink,
+  },
+  signupPrompt: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
@@ -305,7 +324,7 @@ const styles = StyleSheet.create({
     color: Colors.stone,
     fontSize: 14,
   },
-  loginText: {
+  signupText: {
     color: Colors.rust,
     fontWeight: "bold",
     fontSize: 14,

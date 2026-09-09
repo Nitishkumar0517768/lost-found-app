@@ -19,25 +19,29 @@ A community-driven digital noticeboard designed for college and university campu
 
 ```
 lost-found-app/
-├── app/                  # Expo Router file-based screens & navigation
-│   ├── (tabs)/           # Tab screens (Noticeboard, Found, Claims, Alerts, Profile)
-│   ├── _layout.jsx       # Root navigation layout
-│   ├── login.jsx         # User authentication login
-│   ├── report.jsx        # Report Lost / Found Item form
-│   └── signup.jsx        # New student registration
-├── components/           # Reusable UI widgets (DrawerMenu, DatePicker, etc.)
-├── constants/            # Design system, color tokens, and typography
-├── context/              # Global state (AuthContext, DrawerContext)
-├── server/               # Express.js backend API
-│   ├── middleware/       # Auth (JWT) & file upload handlers
-│   ├── models/           # Mongoose schemas (User, LostItem, FoundItem, Claim, Notification)
-│   ├── routes/           # REST endpoints (/auth, /lost-items, /found-items, /claims, etc.)
-│   ├── scripts/          # Database seeding and cleanup utilities
-│   ├── utils/            # Cloudinary, email, and socket helpers
-│   ├── server.js         # Entry point for backend server
-│   └── package.json      # Server dependencies
-├── utils/                # Client API client (Axios) & token storage
-└── package.json          # Mobile app dependencies
+├── frontend/             # React Native (Expo) mobile frontend
+│   ├── app/              # Expo Router file-based screens & navigation
+│   │   ├── (tabs)/       # Tab screens (Noticeboard, Found, Claims, Alerts, Profile)
+│   │   ├── _layout.jsx   # Root navigation layout
+│   │   ├── login.jsx     # User authentication login
+│   │   ├── report.jsx    # Report Lost / Found Item form
+│   │   └── signup.jsx    # New student registration
+│   ├── components/       # Reusable UI widgets (DrawerMenu, DatePicker, etc.)
+│   ├── constants/        # Design system, color tokens, and typography
+│   ├── context/          # Global state (AuthContext, DrawerContext)
+│   ├── hooks/            # Custom React hooks
+│   ├── utils/            # Client API client (Axios) & token storage
+│   ├── app.json          # Expo configuration
+│   └── package.json      # Frontend dependencies
+│
+└── server/               # Express.js backend API
+    ├── middleware/       # Auth (JWT) & file upload handlers
+    ├── models/           # Mongoose schemas (User, LostItem, FoundItem, Claim, Notification)
+    ├── routes/           # REST endpoints (/auth, /lost-items, /found-items, /claims, etc.)
+    ├── scripts/          # Database seeding and cleanup utilities
+    ├── utils/            # Cloudinary, email, and socket helpers
+    ├── server.js         # Entry point for backend server
+    └── package.json      # Server dependencies
 ```
 
 ---
@@ -91,12 +95,17 @@ lost-found-app/
 
 ### 3. Mobile App Setup
 
-1. From the project root directory:
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies (if not already installed):
    ```bash
    npm install
    ```
 
-2. Start the Expo development server:
+3. Start the Expo development server:
    ```bash
    npx expo start -c
    ```

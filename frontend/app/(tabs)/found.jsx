@@ -47,7 +47,7 @@ export default function MyFoundItemsScreen() {
   const handleRemoveItem = (itemId, title) => {
     Alert.alert(
       "Remove Found Item",
-      `Are you sure you want to remove "${title}" from your found items list? Any associated claims will also be deleted.`,
+      `Are you sure you want to remove "${title}" from your found items list? Any associated claims will also be removed.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -56,7 +56,7 @@ export default function MyFoundItemsScreen() {
           onPress: async () => {
             try {
               await api.delete(`/found-items/${itemId}`);
-              Alert.alert("Item Removed", "The found item has been removed from the list.");
+              Alert.alert("Item Removed", "The found item notice has been removed.");
               fetchMyFoundItems();
             } catch (err) {
               const errMsg = err.response?.data?.error || "Could not remove found item.";
@@ -72,33 +72,50 @@ export default function MyFoundItemsScreen() {
     const isReturned = item.status === "returned";
     const isClaimRequested = item.status === "claim_requested";
 
+    const getHoldingLabel = (val) => {
+      switch (val) {
+        case "with_me":
+          return "In Finder's Custody";
+        case "security_office":
+          return "Security Desk";
+        case "college_office":
+          return "Student Affairs Office";
+        default:
+          return val ? val.replace("_", " ") : "On Campus";
+      }
+    };
+
     return (
       <View style={styles.card}>
+        {/* Top Meta Bar */}
         <View style={styles.cardTopRow}>
           <View style={styles.categoryBadge}>
+            <Ionicons name="pricetag-outline" size={12} color={Colors.ink} />
             <Text style={styles.categoryBadgeText}>{item.category || "Item"}</Text>
           </View>
 
           {/* Status Badge */}
           {isReturned ? (
             <View style={styles.badgeReturned}>
-              <Ionicons name="checkmark-done-circle" size={14} color="#FFF" />
-              <Text style={styles.badgeText}>CLAIM APPROVED / RETURNED</Text>
+              <Ionicons name="checkmark-done-circle" size={13} color="#FFF" />
+              <Text style={styles.badgeText}>CLAIM APPROVED • RETURNED</Text>
             </View>
           ) : isClaimRequested ? (
             <View style={styles.badgeClaimed}>
-              <Ionicons name="alert-circle" size={14} color="#FFF" />
+              <Ionicons name="alert-circle" size={13} color="#FFF" />
               <Text style={styles.badgeText}>
                 {item.pendingClaimsCount ? `${item.pendingClaimsCount} CLAIM(S) PENDING` : "CLAIM REQUESTED"}
               </Text>
             </View>
           ) : (
             <View style={styles.badgeActive}>
-              <Text style={styles.badgeText}>ACTIVE ON NOTICEBOARD</Text>
+              <Ionicons name="radio-button-on" size={10} color={Colors.forest} />
+              <Text style={styles.badgeTextActive}>ACTIVE ON BOARD</Text>
             </View>
           )}
         </View>
 
+        {/* Content Row */}
         <View style={styles.contentRow}>
           {item.imageUrl ? (
             <Image source={{ uri: item.imageUrl }} style={styles.itemImage} resizeMode="cover" />
@@ -117,16 +134,26 @@ export default function MyFoundItemsScreen() {
             </Text>
 
             <View style={styles.metaRow}>
-              <Text style={styles.metaText}>📍 {item.location}</Text>
-              <Text style={styles.metaText}>
-                📅 {new Date(item.dateFound).toLocaleDateString()}
-              </Text>
+              <View style={styles.metaItem}>
+                <Ionicons name="location-outline" size={13} color={Colors.rust} />
+                <Text style={styles.metaText}>{item.location}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Ionicons name="calendar-outline" size={13} color={Colors.stone} />
+                <Text style={styles.metaText}>
+                  {new Date(item.dateFound).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </Text>
+              </View>
             </View>
 
             {item.holdingLocation && (
-              <Text style={styles.holdingText}>
-                🏢 Held at: {item.holdingLocation.replace("_", " ")}
-              </Text>
+              <View style={styles.holdingRow}>
+                <Ionicons name="shield-checkmark-outline" size={13} color={Colors.forest} />
+                <Text style={styles.holdingText}>{getHoldingLabel(item.holdingLocation)}</Text>
+              </View>
             )}
           </View>
         </View>
@@ -137,6 +164,7 @@ export default function MyFoundItemsScreen() {
             <TouchableOpacity
               style={styles.reviewBtn}
               onPress={() => router.push("/(tabs)/claims")}
+              activeOpacity={0.8}
             >
               <Ionicons name="file-tray-full" size={16} color={Colors.surface} />
               <Text style={styles.reviewBtnText}>Review Claims</Text>
@@ -146,9 +174,10 @@ export default function MyFoundItemsScreen() {
           <TouchableOpacity
             style={[styles.deleteBtn, isClaimRequested && { flex: 0.8 }]}
             onPress={() => handleRemoveItem(item._id, item.title)}
+            activeOpacity={0.8}
           >
-            <Ionicons name="trash-outline" size={16} color={Colors.rust} />
-            <Text style={styles.deleteBtnText}>Remove</Text>
+            <Ionicons name="trash-outline" size={15} color={Colors.rust} />
+            <Text style={styles.deleteBtnText}>Remove Notice</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -163,17 +192,20 @@ export default function MyFoundItemsScreen() {
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="cube-outline" size={64} color={Colors.stone} />
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="archive-outline" size={48} color={Colors.stone} />
+          </View>
           <Text style={styles.emptyTitle}>No Found Items Reported</Text>
           <Text style={styles.emptySubtitle}>
-            Have you found an item on campus? Report it so the rightful owner can claim it.
+            Found an item on campus? Post a notice so the owner can securely verify their ownership and claim it.
           </Text>
           <TouchableOpacity
             style={styles.reportBtn}
             onPress={() => router.push("/report")}
+            activeOpacity={0.85}
           >
-            <Ionicons name="add-circle" size={20} color={Colors.surface} />
-            <Text style={styles.reportBtnText}>Report Found Item</Text>
+            <Ionicons name="add-circle" size={18} color={Colors.surface} />
+            <Text style={styles.reportBtnText}>POST FOUND ITEM NOTICE</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -209,12 +241,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 2,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 14,
     marginBottom: 14,
     shadowColor: Colors.ink,
     shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 0,
     elevation: 3,
   },
@@ -225,6 +257,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   categoryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     backgroundColor: Colors.paper,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -257,13 +292,24 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   badgeActive: {
-    backgroundColor: Colors.stone,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#EAF2EC",
+    borderWidth: 1,
+    borderColor: "#C3DAC7",
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 4,
   },
   badgeText: {
     color: Colors.surface,
+    fontSize: 10,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  badgeTextActive: {
+    color: Colors.forest,
     fontSize: 10,
     fontWeight: "bold",
     letterSpacing: 0.5,
@@ -273,16 +319,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   itemImage: {
-    width: 80,
-    height: 80,
+    width: 86,
+    height: 86,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.paper,
   },
   imagePlaceholder: {
-    width: 80,
-    height: 80,
+    width: 86,
+    height: 86,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -294,7 +340,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "serif",
     fontWeight: "bold",
     color: Colors.ink,
@@ -303,32 +349,42 @@ const styles = StyleSheet.create({
   itemDesc: {
     fontSize: 12,
     color: Colors.stone,
-    marginBottom: 6,
+    marginBottom: 8,
     lineHeight: 16,
   },
   metaRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: 12,
     marginBottom: 4,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   metaText: {
     fontSize: 11,
     color: Colors.ink,
-    fontWeight: "500",
+    fontWeight: "600",
+  },
+  holdingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 3,
   },
   holdingText: {
     fontSize: 11,
     color: Colors.forest,
     fontWeight: "600",
-    textTransform: "capitalize",
   },
   actionRow: {
     flexDirection: "row",
     gap: 10,
     marginTop: 12,
     paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopWidth: 1.5,
+    borderTopColor: Colors.paper,
   },
   reviewBtn: {
     flex: 1.2,
@@ -337,9 +393,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     backgroundColor: Colors.marigold,
-    paddingVertical: 8,
-    borderRadius: 4,
-    borderWidth: 1,
+    paddingVertical: 9,
+    borderRadius: 6,
+    borderWidth: 1.5,
     borderColor: Colors.ink,
   },
   reviewBtnText: {
@@ -353,29 +409,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: "#FCEBE6",
-    paddingVertical: 8,
-    borderRadius: 4,
+    backgroundColor: "#FDF2E9",
+    paddingVertical: 9,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: Colors.rust,
   },
   deleteBtnText: {
     color: Colors.rust,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "bold",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 30,
+    padding: 32,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.surface,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontFamily: "serif",
     fontWeight: "bold",
     color: Colors.ink,
-    marginTop: 16,
     marginBottom: 6,
   },
   emptySubtitle: {
@@ -383,22 +449,28 @@ const styles = StyleSheet.create({
     color: Colors.stone,
     textAlign: "center",
     lineHeight: 18,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   reportBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     backgroundColor: Colors.marigold,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.ink,
+    shadowColor: Colors.ink,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   reportBtnText: {
     color: Colors.surface,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 });
