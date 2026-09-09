@@ -281,18 +281,48 @@ export default function ReportScreen() {
             onChange={setDate}
           />
 
-          {/* Lost Item Specific: Approx Time */}
+          {/* Lost Item Specific: Approx Time & Optional Gallery Photo */}
           {reportType === "lost" ? (
-            <CampusDropdown
-              label="APPROXIMATE TIME (OPTIONAL)"
-              value={approxTime}
-              options={[
-                { label: "Any Time / Not Specified", value: "", icon: "time-outline" },
-                ...TIMES,
-              ]}
-              onSelect={setApproxTime}
-              placeholder="Select approximate time..."
-            />
+            <View>
+              <CampusDropdown
+                label="APPROXIMATE TIME (OPTIONAL)"
+                value={approxTime}
+                options={[
+                  { label: "Any Time / Not Specified", value: "", icon: "time-outline" },
+                  ...TIMES,
+                ]}
+                onSelect={setApproxTime}
+                placeholder="Select approximate time..."
+              />
+
+              {/* Optional Photo from Gallery for Lost Item */}
+              <Text style={styles.label}>ITEM PHOTO (OPTIONAL - FROM GALLERY)</Text>
+              <View style={styles.photoActionsRow}>
+                <TouchableOpacity
+                  style={styles.galleryBtnFull}
+                  onPress={handlePickFromGallery}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.galleryBtnText}>🖼️ Choose Image from Gallery</Text>
+                </TouchableOpacity>
+              </View>
+
+              {imagePreview ? (
+                <View style={styles.previewContainer}>
+                  <Image source={{ uri: imagePreview }} style={styles.previewImage} resizeMode="cover" />
+                  <TouchableOpacity
+                    style={styles.removeImageBtn}
+                    onPress={() => {
+                      setImageUrl("");
+                      setImagePreview("");
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.removeImageText}>✕ Remove Photo</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </View>
           ) : (
             <View>
               {/* Current Holding Location Dropdown */}
@@ -304,8 +334,10 @@ export default function ReportScreen() {
                 placeholder="Select holding location..."
               />
 
-              {/* Photo Upload Section */}
-              <Text style={styles.label}>ITEM PHOTO (CAMERA / GALLERY)</Text>
+              {/* Compulsory Photo Upload Section for Found Item (Camera or Gallery) */}
+              <Text style={styles.label}>
+                ITEM PHOTO <Text style={{ color: Colors.rust }}>* (REQUIRED)</Text>
+              </Text>
               <View style={styles.photoActionsRow}>
                 <TouchableOpacity
                   style={styles.cameraBtn}
@@ -461,6 +493,16 @@ const styles = StyleSheet.create({
   },
   galleryBtn: {
     flex: 1,
+    backgroundColor: Colors.paper,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 4,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  galleryBtnFull: {
+    flex: 1,
+    width: "100%",
     backgroundColor: Colors.paper,
     borderWidth: 1,
     borderColor: Colors.border,
